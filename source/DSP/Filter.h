@@ -8,10 +8,10 @@
 class Filter
 {
 public:
-    static constexpr float defaultCutoffHz = 2500.0f;
+    static constexpr float defaultCutoffHz = 1050.0f;
     static constexpr float defaultResonance = 0.85f;
-    static constexpr float minCutoffHz = 80.0f;
-    static constexpr float maxCutoffHz = 18000.0f;
+    static constexpr float minCutoffHz = 400.0f;
+    static constexpr float maxCutoffHz = 2000.0f;
     static constexpr float minResonance = 0.5f;
     static constexpr float maxResonance = 1.15f;
 

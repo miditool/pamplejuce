@@ -2,6 +2,8 @@
 
 #include "Control/MacroManager.h"
 #include "Control/ModulationMatrix.h"
+#include "Control/Parameters.h"
+#include "Control/PresetManager.h"
 #include "DSP/SynthEngine.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
@@ -47,8 +49,19 @@ public:
     ModulationMatrix& getModulationMatrix();
     const ModulationMatrix& getModulationMatrix() const;
 
+    juce::AudioProcessorValueTreeState& getAPVTS() { return apvts; }
+    const juce::AudioProcessorValueTreeState& getAPVTS() const { return apvts; }
+
+    const PresetManager& getPresetManager() const { return presetManager; }
+
 private:
+    void updateMacrosFromParameters();
+    bool applyPreset (int index);
+
     SynthEngine synthEngine;
+    PresetManager presetManager;
+    juce::AudioProcessorValueTreeState apvts;
+    int currentProgramIndex = 0;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginProcessor)
 };

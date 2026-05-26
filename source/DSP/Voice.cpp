@@ -6,6 +6,7 @@
 void SynthVoice::prepare (double sampleRate, int samplesPerBlock)
 {
     unisonSection.prepare (sampleRate, samplesPerBlock);
+    sineSubLayer.prepare (sampleRate, samplesPerBlock);
     filter.prepare (sampleRate, samplesPerBlock);
     modulationRouter.prepare (sampleRate, samplesPerBlock);
 
@@ -36,6 +37,8 @@ void SynthVoice::startNote (int midiNoteNumber, float velocity,
 
     unisonSection.setFrequency (currentFrequency);
     unisonSection.reset();
+    sineSubLayer.setFrequency (currentFrequency);
+    sineSubLayer.reset();
     filter.reset();
     modulationRouter.reset();
     adsr.noteOn();
@@ -55,7 +58,9 @@ void SynthVoice::stopNote (float /*velocity*/, bool allowTailOff)
 void SynthVoice::pitchWheelMoved (int newPitchWheelValue)
 {
     const auto pitchBendSemitones = (newPitchWheelValue - 8192) / 8192.0f * 2.0f;
-    unisonSection.setFrequency (currentFrequency * std::pow (2.0f, pitchBendSemitones / 12.0f));
+    const auto bentFrequency = currentFrequency * std::pow (2.0f, pitchBendSemitones / 12.0f);
+    unisonSection.setFrequency (bentFrequency);
+    sineSubLayer.setFrequency (bentFrequency);
 }
 
 void SynthVoice::controllerMoved (int, int) {}
@@ -79,12 +84,18 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int st
         currentEnvelopeValue = adsr.getNextSample();
         const auto gain = currentEnvelopeValue * currentLevel;
         const auto oscOutput = unisonSection.processSample();
+        const auto sineOutput = sineSubLayer.processSample();
+
+        const StereoSample combined {
+            oscOutput.left + sineOutput.left,
+            oscOutput.right + sineOutput.right,
+        };
 
         const auto cutoffModHz = modulationMatrix != nullptr
             ? modulationMatrix->evaluateVoiceDestination (*this, ModDestinationID::FilterCutoff)
             : 0.0f;
 
-        const auto filtered = filter.processSample (oscOutput, cutoffModHz);
+        const auto filtered = filter.processSample (combined, cutoffModHz);
 
         outputBuffer.addSample (leftChannel, startSample + sample, filtered.left * gain);
 

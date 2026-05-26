@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<PARAMETERS>
+  <PARAM id="macroAir" value="0.36"/>
+  <PARAM id="macroMotion" value="0.44"/>
+  <PARAM id="macroWidth" value="0.48"/>
+  <PARAM id="macroWarmth" value="0.88"/>
+  <PARAM id="macroSpace" value="0.12"/>
+</PARAMETERS>

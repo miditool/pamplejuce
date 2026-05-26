@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.25)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # This tells cmake we have goodies in the /cmake folder
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include (PamplejuceVersion)
@@ -15,16 +17,16 @@ include(JUCEDefaults)
 
 # The internal name of the project and the name of JUCE's shared code target
 # Note: This cannot have spaces!
-set(PROJECT_NAME "AtmosphericLiquidPad")
+set(PROJECT_NAME "LiquidLush")
 
 # What DAWs will display (Spaces allowed)
-set(PRODUCT_NAME "Atmospheric Liquid Pad")
+set(PRODUCT_NAME "Liquid Lush")
 
 # Used for the MacOS bundle name and Installers
-set(COMPANY_NAME "TRAUMASPIRAL")
+set(COMPANY_NAME "MIDITool")
 
 # Used for the MacOS bundle identifier (and signing)
-set(BUNDLE_ID "com.traumaspiral.atmosphericliquidpad")
+set(BUNDLE_ID "com.miditool.liquidlush")
 
 # Set the plugin formats you want built
 set(FORMATS Standalone AU VST3 AUv3)
@@ -101,7 +103,7 @@ target_compile_definitions(SharedCode
     JUCE_VST3_CAN_REPLACE_VST2=0
     CMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"
     VERSION="${CURRENT_VERSION}"
-    PRODUCT_NAME_WITHOUT_VERSION="Atmospheric Liquid Pad"
+    PRODUCT_NAME_WITHOUT_VERSION="Liquid Lush"
 )
 
 # Link to any other modules you added

@@ -76,7 +76,9 @@ public:
 
     float getTailLengthSeconds() const
     {
-        return juce::jmax (SynthVoice::getTailLengthSeconds(), Reverb::getTailLengthSeconds());
+        return juce::jmax (SynthVoice::getTailLengthSeconds(),
+                           Reverb::getTailLengthSeconds(),
+                           SpaceReverb::getTailLengthSeconds());
     }
 
 private:
@@ -87,6 +89,8 @@ private:
 
         modulationMatrix.evaluateBlock (macroManager);
         modulationMatrix.applyBlockModulations (synthesiser, effectChain);
+        effectChain.setSpaceAmount (
+            MacroMapping::computeEffectiveSpaceAmount (macroManager));
     }
 
     juce::Synthesiser synthesiser;

@@ -11,9 +11,9 @@ struct UnisonVoiceState
 // Global unison settings for one polyphonic voice.
 struct UnisonConfig
 {
-    static constexpr int maxUnisonVoices = 8;
+    static constexpr int maxUnisonVoices = 4;
 
-    int unisonCount = 1;
-    float detuneSpread = 0.0f;
-    float stereoSpread = 0.0f;
+    int unisonCount = 3;
+    float detuneSpread = 0.14f;
+    float stereoSpread = 0.58f;
 };

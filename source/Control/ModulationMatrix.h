@@ -46,14 +46,14 @@ public:
 
     void applyBlockModulations (juce::Synthesiser& synthesiser, EffectChain& effectChain);
 
+    EngineModulationState& getEngineModulationState() { return engineState; }
+
+    std::array<VoiceModulationState, maxVoices>& getVoiceModulationStates() { return voiceStates; }
+
     float evaluateVoiceDestination (SynthVoice& voice, ModDestinationID destination);
 
 private:
     void clearAccumulators();
-
-    static float getBlockSourceValue (ModSourceID source, const MacroManager& macroManager);
-
-    static float getMacroBipolar (const MacroManager& macroManager, int macroIndex);
 
     std::array<ModConnection, maxConnections> connections {};
     std::array<VoiceModulationState, maxVoices> voiceStates {};

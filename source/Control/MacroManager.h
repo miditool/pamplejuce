@@ -8,8 +8,9 @@
 class MacroManager
 {
 public:
-    static constexpr int numMacros = 4;
+    static constexpr int numMacros = 5;
     static constexpr float defaultMacroValue = 0.5f;
+    static constexpr float defaultSpaceValue = 0.0f;
 
     enum MacroIndex : int
     {
@@ -17,16 +18,22 @@ public:
         Motion,
         Width,
         Warmth,
+        Space,
     };
 
     void prepare (double sampleRate)
     {
-        constexpr double smoothingTimeSeconds = 0.075;
+        constexpr double defaultSmoothingTimeSeconds = 0.075;
+        constexpr double spaceSmoothingTimeSeconds = 0.225;
 
-        for (auto& macroValue : macroValues)
+        for (int i = 0; i < numMacros; ++i)
         {
-            macroValue.reset (sampleRate, smoothingTimeSeconds);
-            macroValue.setCurrentAndTargetValue (defaultMacroValue);
+            auto& macroValue = macroValues[static_cast<size_t> (i)];
+            const auto smoothingTime = (i == Space) ? spaceSmoothingTimeSeconds : defaultSmoothingTimeSeconds;
+            macroValue.reset (sampleRate, smoothingTime);
+
+            const auto initialValue = (i == Space) ? defaultSpaceValue : defaultMacroValue;
+            macroValue.setCurrentAndTargetValue (initialValue);
         }
     }
 
@@ -72,6 +79,7 @@ public:
             case Motion: return "MOTION";
             case Width:  return "WIDTH";
             case Warmth: return "WARMTH";
+            case Space:  return "SPACE";
             default:     return "MACRO";
         }
     }

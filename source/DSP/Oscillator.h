@@ -8,7 +8,7 @@ enum class Waveform
     Saw,
 };
 
-// Single band-limited oscillator. Used by OscillatorSection and future unison voices.
+// Single band-limited oscillator. Used by OscillatorSection and unison voices.
 class Oscillator
 {
 public:
@@ -30,11 +30,11 @@ public:
         switch (currentWaveform)
         {
             case Waveform::Sine:
-                oscillator.initialise (sineWave);
+                oscillator.initialise ([this] (float phase) { return sineWave (phase + phaseOffsetRadians); });
                 break;
 
             case Waveform::Saw:
-                oscillator.initialise (sawWave);
+                oscillator.initialise ([this] (float phase) { return sawWave (phase + phaseOffsetRadians); });
                 break;
         }
     }
@@ -42,6 +42,12 @@ public:
     void setFrequency (float frequencyHz)
     {
         oscillator.setFrequency (frequencyHz);
+    }
+
+    void setPhaseOffset (float newPhaseOffsetRadians)
+    {
+        phaseOffsetRadians = newPhaseOffsetRadians;
+        setWaveform (currentWaveform);
     }
 
     void reset()
@@ -69,4 +75,5 @@ private:
     juce::dsp::Oscillator<float> oscillator;
     juce::dsp::ProcessSpec spec {};
     Waveform currentWaveform = Waveform::Saw;
+    float phaseOffsetRadians = 0.0f;
 };

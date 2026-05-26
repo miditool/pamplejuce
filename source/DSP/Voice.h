@@ -2,6 +2,7 @@
 
 #include "Filter.h"
 #include "ModulationRouter.h"
+#include "SineSubLayer.h"
 #include "UnisonSection.h"
 
 #include <juce_audio_basics/juce_audio_basics.h>
@@ -52,6 +53,7 @@ public:
 
 private:
     UnisonSection unisonSection;
+    SineSubLayer sineSubLayer;
     Filter filter;
     ModulationRouter modulationRouter;
     juce::ADSR adsr;

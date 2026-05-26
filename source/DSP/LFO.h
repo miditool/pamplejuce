@@ -10,7 +10,7 @@ public:
     static constexpr float minRateHz = 0.03f;
     static constexpr float maxRateHz = 0.12f;
     static constexpr float defaultDepth = 0.4f;
-    static constexpr float maxCutoffModDepthHz = 900.0f;
+    static constexpr float maxCutoffModDepthHz = 380.0f;
 
     void prepare (double sampleRate, int samplesPerBlock)
     {

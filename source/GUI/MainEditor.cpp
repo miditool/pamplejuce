@@ -16,30 +16,85 @@ MainEditor::MainEditor (PluginProcessor& processor)
     macrosSectionLabel.setInterceptsMouseClicks (false, false);
     addAndMakeVisible (macrosSectionLabel);
 
-    engineSectionLabel.setText ("Synth Engine", juce::dontSendNotification);
-    engineSectionLabel.setJustificationType (juce::Justification::centredLeft);
-    engineSectionLabel.setFont (juce::FontOptions { 14.0f, juce::Font::bold });
-    engineSectionLabel.setInterceptsMouseClicks (false, false);
-    addAndMakeVisible (engineSectionLabel);
+    presetsSectionLabel.setText ("Presets", juce::dontSendNotification);
+    presetsSectionLabel.setJustificationType (juce::Justification::centredLeft);
+    presetsSectionLabel.setFont (juce::FontOptions { 14.0f, juce::Font::bold });
+    presetsSectionLabel.setInterceptsMouseClicks (false, false);
+    addAndMakeVisible (presetsSectionLabel);
 
-    configureMacroKnob (airKnob, MacroManager::Air);
-    configureMacroKnob (motionKnob, MacroManager::Motion);
-    configureMacroKnob (widthKnob, MacroManager::Width);
-    configureMacroKnob (warmthKnob, MacroManager::Warmth);
+    attachMacroKnob (airKnob, ParamIDs::macroAir, 0);
+    attachMacroKnob (motionKnob, ParamIDs::macroMotion, 1);
+    attachMacroKnob (widthKnob, ParamIDs::macroWidth, 2);
+    attachMacroKnob (warmthKnob, ParamIDs::macroWarmth, 3);
+    attachMacroKnob (spaceKnob, ParamIDs::macroSpace, 4);
 
     for (auto* knob : macroKnobs)
         addAndMakeVisible (knob);
 
-    setSize (520, 360);
+    populatePresetSelector();
+
+    presetBox.onChange = [this]
+    {
+        processorRef.setCurrentProgram (presetBox.getSelectedItemIndex());
+    };
+
+    previousPresetButton.onClick = [this] { changePresetByOffset (-1); };
+    nextPresetButton.onClick = [this] { changePresetByOffset (1); };
+
+    addAndMakeVisible (presetBox);
+    addAndMakeVisible (previousPresetButton);
+    addAndMakeVisible (nextPresetButton);
+
+    syncPresetSelector();
+    processorRef.addListener (this);
+
+    setSize (620, 360);
 }
 
-void MainEditor::configureMacroKnob (MacroKnob& knob, int macroIndex)
+MainEditor::~MainEditor()
 {
-    knob.setValue (processorRef.getMacro (macroIndex), juce::dontSendNotification);
-    knob.setOnValueChanged ([this, macroIndex] (float value)
-    {
-        processorRef.setMacro (macroIndex, value);
-    });
+    processorRef.removeListener (this);
+}
+
+void MainEditor::attachMacroKnob (MacroKnob& knob, const char* paramID, size_t attachmentIndex)
+{
+    macroAttachments[attachmentIndex] = std::make_unique<juce::SliderParameterAttachment> (
+        *processorRef.getAPVTS().getParameter (paramID),
+        knob.getSlider());
+}
+
+void MainEditor::populatePresetSelector()
+{
+    presetBox.clear (juce::dontSendNotification);
+
+    const auto& presetManager = processorRef.getPresetManager();
+
+    for (int i = 0; i < presetManager.getNumPresets(); ++i)
+        presetBox.addItem (presetManager.getPresetName (i), i + 1);
+}
+
+void MainEditor::syncPresetSelector()
+{
+    presetBox.setSelectedItemIndex (processorRef.getCurrentProgram(), juce::dontSendNotification);
+}
+
+void MainEditor::changePresetByOffset (int offset)
+{
+    const auto numPresets = processorRef.getNumPrograms();
+
+    if (numPresets <= 0)
+        return;
+
+    const auto currentIndex = processorRef.getCurrentProgram();
+    const auto nextIndex = (currentIndex + offset + numPresets) % numPresets;
+    processorRef.setCurrentProgram (nextIndex);
+    syncPresetSelector();
+}
+
+void MainEditor::audioProcessorChanged (juce::AudioProcessor*, const ChangeDetails& details)
+{
+    if (details.programChanged)
+        syncPresetSelector();
 }
 
 void MainEditor::paint (juce::Graphics& g)
@@ -48,11 +103,11 @@ void MainEditor::paint (juce::Graphics& g)
 
     g.setColour (juce::Colour { 0xff2a2a32 });
     g.fillRoundedRectangle (macrosSectionBounds.toFloat(), 6.0f);
-    g.fillRoundedRectangle (engineSectionBounds.toFloat(), 6.0f);
+    g.fillRoundedRectangle (presetsSectionBounds.toFloat(), 6.0f);
 
     g.setColour (juce::Colour { 0xff3a3a44 });
     g.drawRoundedRectangle (macrosSectionBounds.toFloat(), 6.0f, 1.0f);
-    g.drawRoundedRectangle (engineSectionBounds.toFloat(), 6.0f, 1.0f);
+    g.drawRoundedRectangle (presetsSectionBounds.toFloat(), 6.0f, 1.0f);
 }
 
 void MainEditor::resized()
@@ -64,7 +119,7 @@ void MainEditor::resized()
 
     macrosSectionBounds = bounds.removeFromTop (160);
     bounds.removeFromTop (12);
-    engineSectionBounds = bounds;
+    presetsSectionBounds = bounds;
 
     auto macrosContent = macrosSectionBounds.reduced (12);
     macrosSectionLabel.setBounds (macrosContent.removeFromTop (22));
@@ -78,6 +133,14 @@ void MainEditor::resized()
         knob->setBounds (knobArea);
     }
 
-    auto engineContent = engineSectionBounds.reduced (12);
-    engineSectionLabel.setBounds (engineContent.removeFromTop (22));
+    auto presetsContent = presetsSectionBounds.reduced (12);
+    presetsSectionLabel.setBounds (presetsContent.removeFromTop (22));
+    presetsContent.removeFromTop (8);
+
+    auto presetControls = presetsContent.removeFromTop (28);
+    previousPresetButton.setBounds (presetControls.removeFromLeft (32));
+    presetControls.removeFromLeft (8);
+    nextPresetButton.setBounds (presetControls.removeFromLeft (32));
+    presetControls.removeFromLeft (8);
+    presetBox.setBounds (presetControls);
 }

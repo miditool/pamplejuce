@@ -28,3 +28,30 @@ cmake-build-debug
 cmake-build-release
 cmake-build-relwithdebinfo
 packaging/Output/*
+
+# Build folders
+build/
+cmake-build-*/
+Debug/
+Release/
+
+# Visual Studio / IDE
+.vs/
+*.user
+*.VC.db
+
+# JUCE generated files
+JuceLibraryCode/
+*.jucer
+
+# macOS
+.DS_Store
+
+# Logs / temp
+*.log
+
+# Binary outputs
+*.dll
+*.vst3
+*.exe
+*.app

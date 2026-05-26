@@ -10,7 +10,8 @@
 class MacroKnob : public juce::Component
 {
 public:
-    explicit MacroKnob (const juce::String& name)
+    explicit MacroKnob (const juce::String& name, float defaultValue = MacroManager::defaultMacroValue)
+        : defaultMacroValue (defaultValue)
     {
         label.setText (name, juce::dontSendNotification);
         label.setJustificationType (juce::Justification::centred);
@@ -20,7 +21,7 @@ public:
         slider.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
         slider.setTextBoxStyle (juce::Slider::TextBoxBelow, false, 56, 18);
         slider.setRange (0.0, 1.0, 0.001);
-        slider.setDoubleClickReturnValue (true, MacroManager::defaultMacroValue);
+        slider.setDoubleClickReturnValue (true, defaultMacroValue);
         slider.setScrollWheelEnabled (false);
         slider.onValueChange = [this]
         {
@@ -45,6 +46,10 @@ public:
         return static_cast<float> (slider.getValue());
     }
 
+    juce::Slider& getSlider() { return slider; }
+
+    const juce::Slider& getSlider() const { return slider; }
+
     void resized() override
     {
         auto area = getLocalBounds();
@@ -55,5 +60,6 @@ public:
 private:
     juce::Label label;
     juce::Slider slider;
+    float defaultMacroValue = MacroManager::defaultMacroValue;
     std::function<void (float)> onValueChanged;
 };

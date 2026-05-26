@@ -1,6 +1,5 @@
 #include "PluginProcessor.h"
 #include "GUI/MainEditor.h"
-#include "Control/MacroManager.h"
 
 //==============================================================================
 PluginProcessor::PluginProcessor()
@@ -11,7 +10,8 @@ PluginProcessor::PluginProcessor()
                       #endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
-                       )
+                       ),
+       apvts (*this, nullptr, juce::Identifier { "PARAMETERS" }, createParameterLayout())
 {
 }
 
@@ -59,23 +59,23 @@ double PluginProcessor::getTailLengthSeconds() const
 
 int PluginProcessor::getNumPrograms()
 {
-    return 1;
+    return presetManager.getNumPresets();
 }
 
 int PluginProcessor::getCurrentProgram()
 {
-    return 0;
+    return currentProgramIndex;
 }
 
 void PluginProcessor::setCurrentProgram (int index)
 {
-    juce::ignoreUnused (index);
+    if (applyPreset (index))
+        updateHostDisplay (juce::AudioProcessorListener::ChangeDetails().withProgramChanged (true));
 }
 
 const juce::String PluginProcessor::getProgramName (int index)
 {
-    juce::ignoreUnused (index);
-    return {};
+    return presetManager.getPresetName (index);
 }
 
 void PluginProcessor::changeProgramName (int index, const juce::String& newName)
@@ -87,6 +87,7 @@ void PluginProcessor::changeProgramName (int index, const juce::String& newName)
 void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     synthEngine.prepare (sampleRate, samplesPerBlock);
+    updateMacrosFromParameters();
 }
 
 void PluginProcessor::releaseResources()
@@ -117,6 +118,7 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
                                     juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
+    updateMacrosFromParameters();
     synthEngine.renderNextBlock (buffer, midiMessages);
 }
 
@@ -134,22 +136,35 @@ juce::AudioProcessorEditor* PluginProcessor::createEditor()
 //==============================================================================
 void PluginProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    juce::ignoreUnused (destData);
+    const auto state = apvts.copyState();
+    const std::unique_ptr<juce::XmlElement> xml (state.createXml());
+
+    if (xml != nullptr)
+        copyXmlToBinary (*xml, destData);
 }
 
 void PluginProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
-    juce::ignoreUnused (data, sizeInBytes);
+    const std::unique_ptr<juce::XmlElement> xml (getXmlFromBinary (data, sizeInBytes));
+
+    if (xml != nullptr && xml->hasTagName (apvts.state.getType()))
+        apvts.replaceState (juce::ValueTree::fromXml (*xml));
+
+    updateMacrosFromParameters();
 }
 
 void PluginProcessor::setMacro (int index, float value)
 {
-    synthEngine.setMacro (index, value);
+    if (auto* param = apvts.getParameter (getMacroParamID (index)))
+        param->setValueNotifyingHost (param->convertTo0to1 (value));
 }
 
 float PluginProcessor::getMacro (int index) const
 {
-    return synthEngine.getMacro (index);
+    if (auto* param = apvts.getRawParameterValue (getMacroParamID (index)))
+        return param->load();
+
+    return MacroManager::defaultMacroValue;
 }
 
 MacroManager& PluginProcessor::getMacroManager()
@@ -170,6 +185,31 @@ ModulationMatrix& PluginProcessor::getModulationMatrix()
 const ModulationMatrix& PluginProcessor::getModulationMatrix() const
 {
     return synthEngine.getModulationMatrix();
+}
+
+void PluginProcessor::updateMacrosFromParameters()
+{
+    for (int i = 0; i < MacroManager::numMacros; ++i)
+    {
+        if (auto* param = apvts.getRawParameterValue (getMacroParamID (i)))
+            synthEngine.setMacro (i, param->load());
+    }
+}
+
+bool PluginProcessor::applyPreset (int index)
+{
+    if (index < 0 || index >= presetManager.getNumPresets())
+        return false;
+
+    const auto presetXml = presetManager.getPresetXml (index);
+
+    if (presetXml == nullptr || ! presetXml->hasTagName (apvts.state.getType()))
+        return false;
+
+    apvts.replaceState (juce::ValueTree::fromXml (*presetXml));
+    updateMacrosFromParameters();
+    currentProgramIndex = index;
+    return true;
 }
 
 //==============================================================================

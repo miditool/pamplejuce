@@ -66,7 +66,7 @@ void ModulationMatrix::evaluateBlock (const MacroManager& macroManager)
         if (! connection.active || isAudioRateDestination (connection.destination))
             continue;
 
-        const auto sourceValue = getBlockSourceValue (connection.source, macroManager);
+        const auto sourceValue = MacroMapping::getSourceBipolar (connection.source, macroManager);
         const auto contribution = sourceValue * connection.amount;
 
         if (isEngineDestination (connection.destination))
@@ -79,6 +79,8 @@ void ModulationMatrix::evaluateBlock (const MacroManager& macroManager)
                 voiceState.blockValues[static_cast<size_t> (connection.destination)] += contribution;
         }
     }
+
+    MacroMapping::accumulateGlueModulations (macroManager, *this);
 }
 
 void ModulationMatrix::applyBlockModulations (juce::Synthesiser& synthesiser, EffectChain& effectChain)
@@ -144,33 +146,4 @@ void ModulationMatrix::clearAccumulators()
         voiceState.blockValues.fill (0.0f);
 
     engineState.blockValues.fill (0.0f);
-}
-
-float ModulationMatrix::getBlockSourceValue (ModSourceID source, const MacroManager& macroManager)
-{
-    switch (source)
-    {
-        case ModSourceID::MacroAir:
-            return getMacroBipolar (macroManager, MacroManager::Air);
-
-        case ModSourceID::MacroMotion:
-            return getMacroBipolar (macroManager, MacroManager::Motion);
-
-        case ModSourceID::MacroWidth:
-            return getMacroBipolar (macroManager, MacroManager::Width);
-
-        case ModSourceID::MacroWarmth:
-            return getMacroBipolar (macroManager, MacroManager::Warmth);
-
-        case ModSourceID::LFO1:
-        case ModSourceID::Envelope:
-        case ModSourceID::Velocity:
-        default:
-            return 0.0f;
-    }
-}
-
-float ModulationMatrix::getMacroBipolar (const MacroManager& macroManager, int macroIndex)
-{
-    return MacroMapping::shapeMacroBipolar (macroManager.getSmoothedMacro (macroIndex));
 }

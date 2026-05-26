@@ -1,0 +1,13 @@
+CompileFlags:
+  Add:
+    - -std=c++23
+    - --target=x86_64-pc-windows-msvc
+    - -DJUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1
+    - -DJUCE_MODULE_AVAILABLE_juce_core=1
+    - -DJUCE_MODULE_AVAILABLE_juce_dsp=1
+    - -DJUCE_MODULE_AVAILABLE_juce_audio_basics=1
+    - -Ibuild/AtmosphericLiquidPad_artefacts/JuceLibraryCode
+    - -IJUCE/modules
+    - -Isource
+    - -Imodules
+  CompilationDatabase: build
