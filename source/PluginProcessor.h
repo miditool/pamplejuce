@@ -1,10 +1,10 @@
 #pragma once
 
-#include <juce_audio_processors/juce_audio_processors.h>
+#include "Control/MacroManager.h"
+#include "Control/ModulationMatrix.h"
+#include "DSP/SynthEngine.h"
 
-#if (MSVC)
-#include "ipps.h"
-#endif
+#include <juce_audio_processors/juce_audio_processors.h>
 
 class PluginProcessor : public juce::AudioProcessor
 {
@@ -38,6 +38,17 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+    void setMacro (int index, float value);
+    float getMacro (int index) const;
+
+    MacroManager& getMacroManager();
+    const MacroManager& getMacroManager() const;
+
+    ModulationMatrix& getModulationMatrix();
+    const ModulationMatrix& getModulationMatrix() const;
+
 private:
+    SynthEngine synthEngine;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginProcessor)
 };
